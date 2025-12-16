@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Fingerprint, Moon, Sun } from "lucide-react";
+import { usePostHog } from "posthog-js/react";
 
 type Punch = {
   id: string;
@@ -12,6 +13,7 @@ type Punch = {
 };
 
 export default function DashboardHome() {
+  const posthog = usePostHog();
   const [time, setTime] = useState<string>("");
   const [isWorking, setIsWorking] = useState(false);
 
@@ -42,6 +44,12 @@ export default function DashboardHome() {
 
     const type = isWorking ? "EXIT" : "ENTRY";
     const label = isWorking ? "Saída" : "Entrada";
+
+    posthog.capture("ponto_registrado", {
+      tipo: label,
+      horario: now,
+      modo: "web",
+    });
 
     const newPunch: Punch = {
       id: Math.random().toString(),
