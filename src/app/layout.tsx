@@ -3,6 +3,7 @@ import { Outfit, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { PostHogProvider } from "@/provider/posthog-provider";
 import Script from "next/script";
+import { Analytics } from "@vercel/analytics/next";
 
 const outfit = Outfit({
   variable: "--font-sans",
@@ -52,7 +53,7 @@ export default function RootLayout({
         className={`${outfit.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
       >
         <PostHogProvider>{children}</PostHogProvider>
-
+        <Analytics />
         <Script
           id="json-ld"
           type="application/ld+json"
