@@ -23,6 +23,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
+import { SupportWidget } from "@/components/dashboard/SupportWidget";
 
 export default function DashboardLayout({
   children,
@@ -223,6 +224,7 @@ export default function DashboardLayout({
           </div>
 
           <div className="max-w-6xl mx-auto animate-fade-in">{children}</div>
+          <SupportWidget />
         </main>
       </div>
     </div>
