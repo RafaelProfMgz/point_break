@@ -3,15 +3,16 @@ import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
   const isDev = process.env.NODE_ENV === "development";
-
   const token = request.cookies.get("auth-token")?.value;
 
-  const isDashboardRoute =
+  const isProtectedRoute =
     request.nextUrl.pathname.startsWith("/home") ||
     request.nextUrl.pathname.startsWith("/profile") ||
-    request.nextUrl.pathname.startsWith("/team");
+    request.nextUrl.pathname.startsWith("/team") ||
+    request.nextUrl.pathname.startsWith("/settings") ||
+    request.nextUrl.pathname.startsWith("/docs");
 
-  if (isDashboardRoute && !token && !isDev) {
+  if (isProtectedRoute && !token && !isDev) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
@@ -27,6 +28,8 @@ export const config = {
     "/home/:path*",
     "/profile/:path*",
     "/team/:path*",
+    "/settings/:path*",
+    "/docs/:path*",
     "/login",
     "/register",
   ],

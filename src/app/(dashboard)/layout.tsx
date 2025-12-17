@@ -24,6 +24,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useEffect, useState } from "react";
 import { SupportWidget } from "@/components/dashboard/SupportWidget";
+import { SearchCommand } from "@/components/dashboard/SearchCommand";
 
 export default function DashboardLayout({
   children,
@@ -31,8 +32,8 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-
   const [isMounted, setIsMounted] = useState(false);
+  const [isCommandOpen, setIsCommandOpen] = useState(false);
 
   useEffect(() => {
     setIsMounted(true);
@@ -91,46 +92,59 @@ export default function DashboardLayout({
 
       <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
         <header className="h-16 border-b border-border bg-background/80 backdrop-blur-md sticky top-0 z-20 px-4 md:px-8 flex items-center justify-between">
-          <div className="md:hidden">
-            {!isMounted ? (
-              <Button variant="ghost" size="icon">
-                <Menu className="w-5 h-5" />
-              </Button>
-            ) : (
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
-                    <Menu className="w-5 h-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  side="left"
-                  className="bg-background border-r border-border"
-                >
-                  <div className="flex flex-col h-full mt-6">
-                    <nav className="flex flex-col gap-2">
-                      {navItems.map((item) => (
-                        <Link
-                          key={item.href}
-                          href={item.href}
-                          className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5"
-                        >
-                          <item.icon className="w-5 h-5 text-primary" />
-                          {item.label}
-                        </Link>
-                      ))}
-                    </nav>
-                  </div>
-                </SheetContent>
-              </Sheet>
-            )}
+          <div className="flex items-center gap-4">
+            <div className="md:hidden">
+              {!isMounted ? (
+                <Button variant="ghost" size="icon">
+                  <Menu className="w-5 h-5" />
+                </Button>
+              ) : (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                      <Menu className="w-5 h-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent
+                    side="left"
+                    className="bg-background border-r border-border"
+                  >
+                    <div className="flex flex-col h-full mt-6">
+                      <nav className="flex flex-col gap-2">
+                        {navItems.map((item) => (
+                          <Link
+                            key={item.href}
+                            href={item.href}
+                            className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-white/5"
+                          >
+                            <item.icon className="w-5 h-5 text-primary" />
+                            {item.label}
+                          </Link>
+                        ))}
+                      </nav>
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
+            </div>
+            <h1 className="text-lg font-semibold capitalize hidden md:block">
+              {pathname.replace("/", "")}
+            </h1>
           </div>
 
-          <h1 className="text-lg font-semibold capitalize hidden md:block">
-            {pathname.replace("/", "")}
-          </h1>
-
           <div className="flex items-center gap-4">
+            <div className="hidden md:flex items-center">
+              <button
+                onClick={() => setIsCommandOpen(true)}
+                className="text-sm text-muted-foreground bg-muted/20 border border-border px-3 py-1.5 rounded-md flex items-center gap-2 hover:bg-muted/40 transition-colors"
+              >
+                <span className="text-xs">Buscar...</span>
+                <kbd className="inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                  <span className="text-xs">⌘</span>K
+                </kbd>
+              </button>
+            </div>
+
             <div className="text-right hidden sm:block">
               <p className="text-sm font-medium leading-none">Gabriel Silva</p>
               <p className="text-xs text-muted-foreground">Admin</p>
@@ -142,10 +156,7 @@ export default function DashboardLayout({
                 className="relative h-10 w-10 rounded-full ring-2 ring-primary/20"
               >
                 <Avatar className="h-10 w-10">
-                  <AvatarImage
-                    src="https://github.com/shadcn.png"
-                    alt="@gabriel"
-                  />
+                  <AvatarImage src="https://github.com/shadcn.png" />
                   <AvatarFallback>GS</AvatarFallback>
                 </Avatar>
               </Button>
@@ -157,10 +168,7 @@ export default function DashboardLayout({
                     className="relative h-10 w-10 rounded-full ring-2 ring-primary/20 hover:ring-primary/50 transition-all"
                   >
                     <Avatar className="h-10 w-10">
-                      <AvatarImage
-                        src="https://github.com/shadcn.png"
-                        alt="@gabriel"
-                      />
+                      <AvatarImage src="https://github.com/shadcn.png" />
                       <AvatarFallback>GS</AvatarFallback>
                     </Avatar>
                   </Button>
@@ -177,7 +185,6 @@ export default function DashboardLayout({
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-
                   <DropdownMenuItem asChild>
                     <Link
                       href="/profile"
@@ -187,7 +194,6 @@ export default function DashboardLayout({
                       <span>Perfil</span>
                     </Link>
                   </DropdownMenuItem>
-
                   <DropdownMenuItem asChild>
                     <Link
                       href="/profile/config"
@@ -197,9 +203,7 @@ export default function DashboardLayout({
                       <span>Configurações</span>
                     </Link>
                   </DropdownMenuItem>
-
                   <DropdownMenuSeparator />
-
                   <DropdownMenuItem
                     asChild
                     className="text-red-500 focus:text-red-500 focus:bg-red-500/10"
@@ -224,6 +228,9 @@ export default function DashboardLayout({
           </div>
 
           <div className="max-w-6xl mx-auto animate-fade-in">{children}</div>
+
+          <SearchCommand open={isCommandOpen} setOpen={setIsCommandOpen} />
+
           <SupportWidget />
         </main>
       </div>

@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Company {
+  id        String   @id @default(uuid())
+  name      String
+  cnpj      String?
+  createdAt DateTime @default(now())
+  
+  users     User[]
+  invites   Invite[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("USER")
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  
+  punches   Punch[]
+  createdAt DateTime @default(now())
+}
+
+model Punch {
+  id        String   @id @default(uuid())
+  type      String
+  timestamp DateTime @default(now())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model Invite {
+  id        String   @id @default(uuid())
+  email     String
+  token     String   @unique
+  
+  companyId String
+  company   Company  @relation(fields: [companyId], references: [id])
+  
+  status    String   @default("PENDING")
+  createdAt DateTime @default(now())
+}

@@ -1,25 +1,40 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
-import { Fingerprint, Moon, Sun } from "lucide-react";
+import { Fingerprint, Moon, Sun, Loader2 } from "lucide-react";
 import { usePostHog } from "posthog-js/react";
+import { toast } from "sonner";
 
 type Punch = {
   id: string;
-  time: string;
-  type: "ENTRY" | "EXIT" | "BREAK_START" | "BREAK_END";
-  label: string;
+  timestamp: string;
+  type: string;
 };
 
 export default function DashboardHome() {
   const posthog = usePostHog();
   const [time, setTime] = useState<string>("");
-  const [isWorking, setIsWorking] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [punches, setPunches] = useState<Punch[]>([]);
 
-  const [punches, setPunches] = useState<Punch[]>([
-    { id: "1", time: "08:00", type: "ENTRY", label: "Entrada" },
-  ]);
+  const isWorking = punches.length > 0 && punches[0].type === "ENTRY";
+
+  const fetchPunches = useCallback(async () => {
+    try {
+      const res = await fetch("/api/punch");
+      if (res.ok) {
+        const data = await res.json();
+        setPunches(data);
+      }
+    } catch (error) {
+      console.error("Erro ao carregar pontos", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchPunches();
+  }, [fetchPunches]);
 
   useEffect(() => {
     const updateTime = () => {
@@ -30,36 +45,46 @@ export default function DashboardHome() {
         })
       );
     };
-
     updateTime();
     const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
-  const handlePunch = () => {
+  const handlePunch = async () => {
+    setLoading(true);
+
     const now = new Date().toLocaleTimeString("pt-BR", {
       hour: "2-digit",
       minute: "2-digit",
     });
+    const actionLabel = isWorking ? "Saída" : "Entrada";
 
-    const type = isWorking ? "EXIT" : "ENTRY";
-    const label = isWorking ? "Saída" : "Entrada";
+    try {
+      const res = await fetch("/api/punch", { method: "POST" });
 
-    posthog.capture("ponto_registrado", {
-      tipo: label,
-      horario: now,
-      modo: "web",
+      if (res.ok) {
+        await fetchPunches();
+        posthog.capture("ponto_registrado", {
+          tipo: actionLabel,
+          horario: now,
+          modo: "web",
+        });
+      } else {
+        toast.error("Erro ao registrar ponto. Tente novamente.");
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro de conexão.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatTime = (isoString: string) => {
+    return new Date(isoString).toLocaleTimeString("pt-BR", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
-
-    const newPunch: Punch = {
-      id: Math.random().toString(),
-      time: now,
-      type,
-      label,
-    };
-
-    setPunches([newPunch, ...punches]);
-    setIsWorking(!isWorking);
   };
 
   return (
@@ -92,12 +117,14 @@ export default function DashboardHome() {
 
         <button
           onClick={handlePunch}
+          disabled={loading}
           className={`
             relative z-10 w-64 h-64 md:w-80 md:h-80 rounded-full 
             flex flex-col items-center justify-center gap-4
             transition-all duration-500 ease-out
             backdrop-blur-2xl border
             active:scale-95 group hover:scale-[1.02]
+            disabled:opacity-50 disabled:cursor-not-allowed
             ${
               isWorking
                 ? "bg-linear-to-b from-destructive/10 to-destructive/5 border-destructive/30 text-destructive shadow-[0_0_50px_-12px_rgba(239,68,68,0.3)] hover:shadow-[0_0_70px_-10px_rgba(239,68,68,0.4)]"
@@ -107,31 +134,38 @@ export default function DashboardHome() {
         >
           <div className="absolute inset-x-0 top-0 h-1/2 rounded-t-full bg-linear-to-b from-white/5 to-transparent opacity-50 pointer-events-none" />
 
-          <div
-            className={`p-6 rounded-full transition-all duration-500 ${
-              isWorking
-                ? "bg-destructive/10 group-hover:bg-destructive/20 rotate-180"
-                : "bg-emerald-500/10 group-hover:bg-emerald-500/20"
-            }`}
-          >
-            <Fingerprint className="w-12 h-12 md:w-16 md:h-16 stroke-[1.5]" />
-          </div>
+          {loading ? (
+            <Loader2 className="w-16 h-16 animate-spin" />
+          ) : (
+            <>
+              <div
+                className={`p-6 rounded-full transition-all duration-500 ${
+                  isWorking
+                    ? "bg-destructive/10 group-hover:bg-destructive/20 rotate-180"
+                    : "bg-emerald-500/10 group-hover:bg-emerald-500/20"
+                }`}
+              >
+                <Fingerprint className="w-12 h-12 md:w-16 md:h-16 stroke-[1.5]" />
+              </div>
 
-          <div className="text-center relative z-10">
-            <span className="text-2xl md:text-4xl font-bold uppercase tracking-[0.2em] block drop-shadow-sm">
-              {isWorking ? "Parar" : "Bater"}
-            </span>
-            <span
-              className={`text-xs font-medium uppercase tracking-[0.3em] mt-2 block transition-colors ${
-                isWorking ? "text-destructive/70" : "text-emerald-500/70"
-              }`}
-            >
-              {isWorking ? "Encerrar Agora" : "Iniciar Ponto"}
-            </span>
-          </div>
+              <div className="text-center relative z-10">
+                <span className="text-2xl md:text-4xl font-bold uppercase tracking-[0.2em] block drop-shadow-sm">
+                  {isWorking ? "Parar" : "Bater"}
+                </span>
+                <span
+                  className={`text-xs font-medium uppercase tracking-[0.3em] mt-2 block transition-colors ${
+                    isWorking ? "text-destructive/70" : "text-emerald-500/70"
+                  }`}
+                >
+                  {isWorking ? "Encerrar Agora" : "Iniciar Ponto"}
+                </span>
+              </div>
+            </>
+          )}
         </button>
       </div>
 
+      {/* Lista de Histórico */}
       <Card className="w-full max-w-md bg-card/50 backdrop-blur-md border-border p-0 overflow-hidden shadow-lg">
         <div className="p-4 border-b border-border bg-muted/20 flex justify-between items-center">
           <span className="font-semibold text-sm text-foreground">
@@ -172,7 +206,9 @@ export default function DashboardHome() {
                   )}
                 </div>
                 <div>
-                  <p className="font-medium text-foreground">{punch.label}</p>
+                  <p className="font-medium text-foreground">
+                    {punch.type === "ENTRY" ? "Entrada" : "Saída"}
+                  </p>
                   <p className="text-xs text-muted-foreground">
                     Registro via Web
                   </p>
@@ -181,7 +217,7 @@ export default function DashboardHome() {
 
               <div className="text-right">
                 <span className="font-mono text-lg font-bold text-foreground tracking-tight">
-                  {punch.time}
+                  {formatTime(punch.timestamp)}
                 </span>
               </div>
             </div>

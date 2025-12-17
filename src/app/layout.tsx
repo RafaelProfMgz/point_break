@@ -4,6 +4,7 @@ import "./globals.css";
 import { PostHogProvider } from "@/provider/posthog-provider";
 import Script from "next/script";
 import { Analytics } from "@vercel/analytics/next";
+import { Toaster } from "@/components/ui/sonner";
 
 const outfit = Outfit({
   variable: "--font-sans",
@@ -54,6 +55,7 @@ export default function RootLayout({
       >
         <PostHogProvider>{children}</PostHogProvider>
         <Analytics />
+        <Toaster richColors position="top-right" theme="dark" />
         <Script
           id="json-ld"
           type="application/ld+json"

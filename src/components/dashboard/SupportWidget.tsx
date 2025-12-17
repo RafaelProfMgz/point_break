@@ -6,7 +6,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { MessageCircle, HelpCircle, Mail, ExternalLink } from "lucide-react";
+import { MessageCircle, HelpCircle, Mail, BookOpen } from "lucide-react";
 import Link from "next/link";
 
 export function SupportWidget() {
@@ -77,9 +77,15 @@ export function SupportWidget() {
             </Button>
 
             <div className="pt-2">
-              <Button variant="secondary" className="w-full text-xs h-8 gap-2">
-                <ExternalLink className="w-3 h-3" />
-                Acessar Central de Ajuda
+              <Button
+                variant="secondary"
+                className="w-full text-xs h-8 gap-2 hover:bg-primary/10 hover:text-primary transition-colors"
+                asChild
+              >
+                <Link href="/docs">
+                  <BookOpen className="w-3 h-3" />
+                  Acessar Documentação
+                </Link>
               </Button>
             </div>
           </div>
